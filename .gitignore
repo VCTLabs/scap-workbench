@@ -9,3 +9,9 @@ CMakeLists.txt.user
 
 # auto-built user_manual.html
 doc/user_manual.html
+
+# tox workflow
+.tox/
+ext/
+__pycache__/
+installed/
