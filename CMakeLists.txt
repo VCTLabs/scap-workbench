@@ -163,6 +163,7 @@ if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" OR ${CMAKE_CXX_COMPILER_ID} STREQUAL
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wno-c++20-compat")
 endif()
 
+include(SetRPATH)  # mainly for development workflows and non-system install paths
 include_directories(${SCAP_WORKBENCH_INCLUDE_DIRS})
 
 # Which languages we want generated
