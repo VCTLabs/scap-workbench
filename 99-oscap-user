@@ -1,0 +1,3 @@
+# allow oscap-user to run openscap scanner
+Defaults!/usr/bin/oscap !requiretty
+oscap-user ALL=(root) NOPASSWD: /usr/bin/oscap
