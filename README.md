@@ -1,6 +1,9 @@
 SCAP Workbench
 ==============
 
+Upstream is now archived. See [README_workflows](file:///README_workflows.rst)
+for usage and backgound information for this fork.
+
 A GUI tool that provides scanning, tailoring and validation functionality for SCAP content
 
 About
