@@ -1,20 +1,35 @@
 name: Gating
 on:
   push:
-    branches: [ '*' ]
-  pull_request:
     branches: [ main, v1-2 ]
+  pull_request:
+    branches: [ '*' ]
+
 jobs:
   build-ubuntu:
-    name: Build on Ubuntu Latest
-    runs-on: ubuntu-latest
+    name: Build on Ubuntu jammy
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Install Deps
         uses: mstksg/get-package@v1
         with:
-          apt-get: build-essential openssh-client libopenscap-dev libqt5xmlpatterns5-dev ssh-askpass asciidoc libpolkit-agent-1-0
-      - name: Checkout
-        uses: actions/checkout@v2
+          apt-get: build-essential openssh-client libqt5xmlpatterns5-dev ssh-askpass asciidoc libpolkit-agent-1-0
+
+      - name:  Install openscap 1.3 from PPA
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get -y -qq update
+          sudo apt-get install -yqq software-properties-common
+          sudo add-apt-repository ppa:nerdboy/embedded
+          sudo apt-get -qq update
+          sudo apt-get install -y libopenscap-dev
+
       - name: Build
         run: |
           mkdir -p build
@@ -23,35 +38,58 @@ jobs:
           make -j4
           popd
 
-  build-fedora:
-    name: Build on Fedora Latest (Container)
-    runs-on: ubuntu-latest
-    container:
-      image: fedora:latest
-    steps:
-      - name: Install Deps
-        run: dnf install -y cmake gcc-c++ openssh-clients util-linux openscap-devel qt5-qtbase-devel qt5-qtxmlpatterns-devel openssh-askpass asciidoc polkit-libs
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Build
-        run: |
-          mkdir -p build
-          pushd build
-          cmake ..
-          make -j4
-          popd
+  #build-fedora:
+    #name: Build on Fedora Latest (Container)
+    #runs-on: ubuntu-latest
+    #container:
+      #image: fedora:latest
+    #steps:
+      #- name: Checkout
+        #uses: actions/checkout@v4
+
+      #- name: Install Deps
+        #run: dnf install -y wget cmake gcc-c++ openssh-clients util-linux openscap-devel qt5-qtbase-devel qt5-qtxmlpatterns-devel openssh-askpass asciidoc polkit-libs
+
+      ##- name: Install Openscap
+        ##run: |
+          ##wget https://kojipkgs.fedoraproject.org//packages/openscap/1.3.10/1.fc41/x86_64/openscap-devel-1.3.10-1.fc41.x86_64.rpm
+          ##dnf install openscap-devel-1.3.10-1.fc41.x86_64.rpm
+      #- name: Build
+        #run: |
+          #mkdir -p build
+          #pushd build
+          #cmake ..
+          #make -j4
+          #popd
 
   build-macos:
     name: Build on MacOS X Latest
     runs-on: macos-latest
+    permissions:
+      contents: read
+
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
+
+    - name: Checkout openscap
+      uses: actions/checkout@v4
+      with:
+        repository: VCTLabs/openscap
+        path: openscap
+        ref: devel-1.3
+
+    - name: Checkout scap-security-guide
+      uses: actions/checkout@v4
+      with:
+        repository: VCTLabs/scap-security-guide
+        path: scap-security-guide
+        ref: oe-stable-even-newer-v1-3
+        fetch-depth: 0
+
     - name: Install Deps
       run: |
-        brew install jq
         brew install qt5
         brew install asciidoc
-        brew install pkg-config
         brew install doxygen
         brew install opendbx
         brew install popt
@@ -60,30 +98,33 @@ jobs:
         brew install libxmlsec1
         brew install pcre
         npm install -g appdmg
-        echo "/usr/local/opt/qt/bin" >> $GITHUB_PATH
-        echo "Qt5_DIR=/usr/local/opt/qt5/lib/cmake/Qt5" >> $GITHUB_ENV
+        echo "Qt5_DIR=/opt/homebrew/opt/qt@5/lib/cmake/Qt5" >> $GITHUB_ENV
+        echo "PKG_CONFIG_PATH=/opt/homebrew/opt/qt@5/lib/pkgconfig" >> $GITHUB_ENV
+
     - name: Build OpenSCAP
       run: |
-        git clone --depth 1 https://github.com/openscap/openscap.git
         pushd openscap/build
         cmake -DENABLE_PROBES=FALSE ../
         make -j4
-        make install
+        sudo make install
         popd
     - name: Build OSX Image
       run: |
         REPOSITORY="ComplianceAsCode/content"
         chmod +x ./build-for-osx.sh
         ./build-for-osx.sh
-        REL_TAG=`wget -q -O- https://api.github.com/repos/${REPOSITORY}/releases/latest | jq -r '.tag_name'`
+        pushd scap-security-guide
+        REL_TAG=`git tag --sort="version:refname"  | tail -n2 | head -n1`
         REL_TAG_NUM=`echo ${REL_TAG} | cut -d"v" -f2`
+        popd
+        echo "SSG version: ${REL_TAG_NUM}"
         DWN_LINK="https://github.com/${REPOSITORY}/releases/download/${REL_TAG}/scap-security-guide-${REL_TAG_NUM}.zip"
         if [ -z "${DWN_LINK}" ]; then echo 'Could not get the ZIP URL! It is empty!'; exit 1; fi
         wget "${DWN_LINK}" -O ssg.zip
         mkdir -p `pwd`/build-osx/scap-workbench.app/Contents/Resources/ssg/ && unzip ssg.zip && cp -a scap-security-guide-*/* `pwd`/build-osx/scap-workbench.app/Contents/Resources/ssg/
         cd build-osx && bash osx-create-dmg.sh
     - name: Upload OSX Image
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: scap-workbench-1.2.1.dmg
         path: build-osx/scap-workbench-1.2.1.dmg
