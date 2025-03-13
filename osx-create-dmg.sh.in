@@ -15,7 +15,7 @@ DMG_BACKGROUND_IMG="@CMAKE_SOURCE_DIR@/osx-dmg-background.png"
 APP_EXE="@CMAKE_BINARY_DIR@/${APP_NAME}.app/Contents/MacOS/${APP_NAME}"
 
 # make sure Qt frameworks are included
-macdeployqt @CMAKE_BINARY_DIR@/${APP_NAME}.app
+/opt/homebrew/opt/qt@5/bin/macdeployqt @CMAKE_BINARY_DIR@/${APP_NAME}.app
 
 VOL_NAME="${APP_NAME}-${VERSION}"   # volume name will be "SuperCoolApp-1.0.0"
 DMG_TMP="${VOL_NAME}-temp.dmg"
@@ -52,7 +52,7 @@ strip -u -r "${APP_EXE}"
 #  UPX: http://upx.sourceforge.net/
 if hash upx 2>/dev/null; then
    echo "Compressing (UPX) ${APP_EXE}..."
-   upx -9 "${APP_EXE}"
+   upx --force-macos -9 "${APP_EXE}"
 fi
 
 # ... perform any other stripping/compressing of libs and executables
