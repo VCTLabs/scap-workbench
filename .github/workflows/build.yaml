@@ -38,29 +38,46 @@ jobs:
           make -j4
           popd
 
-  #build-fedora:
-    #name: Build on Fedora Latest (Container)
-    #runs-on: ubuntu-latest
-    #container:
-      #image: fedora:latest
-    #steps:
-      #- name: Checkout
-        #uses: actions/checkout@v4
+  build-fedora:
+    name: Build on Fedora Latest (Container)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    container:
+      image: fedora:latest
 
-      #- name: Install Deps
-        #run: dnf install -y wget cmake gcc-c++ openssh-clients util-linux openscap-devel qt5-qtbase-devel qt5-qtxmlpatterns-devel openssh-askpass asciidoc polkit-libs
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      ##- name: Install Openscap
-        ##run: |
-          ##wget https://kojipkgs.fedoraproject.org//packages/openscap/1.3.10/1.fc41/x86_64/openscap-devel-1.3.10-1.fc41.x86_64.rpm
-          ##dnf install openscap-devel-1.3.10-1.fc41.x86_64.rpm
-      #- name: Build
-        #run: |
-          #mkdir -p build
-          #pushd build
-          #cmake ..
-          #make -j4
-          #popd
+      - name: Install Deps
+        run: |
+          dnf install -y git cmake gcc-c++ openssh-clients util-linux qt5-qtbase-devel qt5-qtxmlpatterns-devel openssh-askpass asciidoc polkit-libs
+          dnf install -y procps-ng dbus-devel libacl-devel libblkid-devel libcap-devel libcurl-devel libgcrypt-devel libselinux-devel libxml2-devel libxslt-devel libattr-devel make openldap-devel pcre-devel perl-XML-Parser perl-XML-XPath perl-devel python3-devel python3-dbusmock rpm-devel swig bzip2-devel gcc-c++ libyaml-devel xmlsec1-devel xmlsec1-openssl-devel hostname bzip2 lua rpm-build which strace python3-pytest
+
+      - name: Checkout openscap
+        uses: actions/checkout@v4
+        with:
+          repository: VCTLabs/openscap
+          path: openscap
+          ref: devel-1.3
+          submodules: recursive
+
+      - name: Build OpenSCAP
+        run: |
+          pushd openscap/build
+          cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ../
+          make -j4
+          sudo make install
+          popd
+
+      - name: Build
+        run: |
+          mkdir -p build
+          pushd build
+          cmake ..
+          make -j4
+          popd
 
   build-macos:
     name: Build on MacOS X Latest
@@ -77,6 +94,7 @@ jobs:
         repository: VCTLabs/openscap
         path: openscap
         ref: devel-1.3
+        submodules: recursive
 
     - name: Checkout scap-security-guide
       uses: actions/checkout@v4
@@ -108,6 +126,7 @@ jobs:
         make -j4
         sudo make install
         popd
+
     - name: Build OSX Image
       run: |
         REPOSITORY="ComplianceAsCode/content"
