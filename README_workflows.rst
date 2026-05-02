@@ -109,12 +109,12 @@ e.g., using scap-workbench from the previous example, run the following command:
 The VCT branches for the configured workflows were forked from either
 master or the latest stable "maint" branch:
 
-* openscap - 1.3.10 tag plus 2 patches on workbench-1.3_ branch (``tox.ini`` file)
+* openscap - 1.3.13 tag plus 2 patches on workbench-1.3_ branch (``tox.ini`` file)
 
   + enable RPATH install support for local workflows
   + add basic tox file and update gitignore for tox dir
 
-* SSG - stabilization-v0.1.75 merge plus 4 patches on oe-stable-too-new_ branch
+* SSG - stabilization-v0.1.79 merge plus 4 patches on oe-stable-too-new_ branch
   (``tox-dev.ini`` file)
 
   + oe standard: cleanup passwd aging and related login-defs checks
@@ -171,8 +171,8 @@ Ubuntu focal, it might be something like this::
 
   $ sudo apt-get install flex bison build-essential
 
-Additional Qt5 GUI dependencies for scap-workbench are also required;
-again, for Ubuntu focal use something like this::
+Additional Qt5 GUI and desktop dependencies for scap-workbench are also
+required; again, for Ubuntu focal use something like this::
 
   $ sudo apt-get install libqt5xmlpatterns5-dev ssh-askpass libpolkit-agent-1-0
 
@@ -288,7 +288,7 @@ virtual environment created by the tox commands above, e.g.,
 ::
 
   $ cd scap-workbench/  # after running the above install commands
-  $ source .tox/venv/bin/activate
+  $ source .venv/bin/activate
   (venv) $ scap-workbench    # use the GUI to open a data stream (ds file)
                              # from inside the virtual environment
 
