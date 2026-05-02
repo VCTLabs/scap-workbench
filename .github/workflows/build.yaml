@@ -7,14 +7,14 @@ on:
 
 jobs:
   build-ubuntu:
-    name: Build on Ubuntu jammy
-    runs-on: ubuntu-22.04
+    name: Build on Ubuntu
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install Deps
         uses: mstksg/get-package@v1
@@ -48,7 +48,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install Deps
         run: |
@@ -56,7 +56,7 @@ jobs:
           dnf install -y procps-ng dbus-devel libacl-devel libblkid-devel libcap-devel libcurl-devel libgcrypt-devel libselinux-devel libxml2-devel libxslt-devel libattr-devel make openldap-devel pcre-devel perl-XML-Parser perl-XML-XPath perl-devel python3-devel python3-dbusmock rpm-devel swig bzip2-devel gcc-c++ libyaml-devel xmlsec1-devel xmlsec1-openssl-devel hostname bzip2 lua rpm-build which strace python3-pytest
 
       - name: Checkout openscap
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: VCTLabs/openscap
           path: openscap
@@ -86,10 +86,10 @@ jobs:
       contents: read
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Checkout openscap
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         repository: VCTLabs/openscap
         path: openscap
@@ -97,11 +97,11 @@ jobs:
         submodules: recursive
 
     - name: Checkout scap-security-guide
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         repository: VCTLabs/scap-security-guide
         path: scap-security-guide
-        ref: oe-stable-even-newer-v1-3
+        ref: oe-stable
         fetch-depth: 0
 
     - name: Install Deps
@@ -142,15 +142,16 @@ jobs:
         wget "${DWN_LINK}" -O ssg.zip
         mkdir -p `pwd`/build-osx/scap-workbench.app/Contents/Resources/ssg/ && unzip ssg.zip && cp -a scap-security-guide-*/* `pwd`/build-osx/scap-workbench.app/Contents/Resources/ssg/
         cd build-osx && bash osx-create-dmg.sh
+
     - name: Upload OSX Image
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: scap-workbench-1.2.1.dmg
         path: build-osx/scap-workbench-1.2.1.dmg
 
 # We don't do automatic releases, do we?
 #    - name: Release
-#      uses: softprops/action-gh-release@v1
+#      uses: softprops/action-gh-release@v2
 #      if: startsWith(github.ref, 'refs/tags/')
 #      with:
 #        files: build-osx/scap-workbench-${{ steps.get_version.outputs.VERSION }}.dmg
