@@ -5,12 +5,12 @@ pull_with_rebase: false  # use --ff-only if false
 repos:
   - repo_name: openscap
     repo_alias: oscap
-    repo_url: git@github.com:VCTLabs/openscap.git
+    repo_url: https://github.com/VCTLabs/openscap.git
     repo_depth: 0
     repo_remote: origin
     repo_opts: []
     repo_branch: workbench-1.3
-    repo_hash: 23f2b07dfc22deb4e4c9cbe99ae025f9e28aeab4  # 1.3.14+
+    repo_hash: 17e578ad1f3dde4ea468cb4b92788f23f7272417  # 1.3.16+
     repo_use_rebase: true
     repo_has_lfs_files: false
     repo_init_submodules: false
@@ -18,13 +18,13 @@ repos:
     repo_enable: true
   - repo_name: scap-security-guide
     repo_alias: content
-    repo_url: git@github.com:VCTLabs/scap-security-guide.git
+    repo_url: https://github.com/VCTLabs/scap-security-guide.git
     repo_depth: 0
     repo_remote: origin
     repo_opts: []
     repo_branch: oe-stable
-    repo_hash: 40b67e50f322c1539cc4ed759b86b4a6b31873d0  # v0.1.80+
-    repo_use_rebase: true
+    repo_hash: 99eeeda03625f3f0b48a710b2af5e83b2886e079  # v0.1.82+
+    repo_use_rebase: false
     repo_has_lfs_files: false
     repo_init_submodules: false
     repo_install: false

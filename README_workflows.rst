@@ -1,6 +1,5 @@
-============================================
- OSCAP Assessment and Development Workflows
-============================================
+OSCAP Assessment and Development Workflows
+==========================================
 
 The Security Content Automation Protocol (SCAP) is a method of using
 certain interoperable security standards to automate evaluating policy
@@ -16,9 +15,9 @@ non-RHEL environments, eg, the baseline openembedded profile was only recently
 merged into the SSG source code.
 
 Development workflows
-=====================
+~~~~~~~~~~~~~~~~~~~~~
 
-* content (profile) development/tailoring
+* content (profile) development/tailoring/scanning
 * upstream/backports integration
 * packaging/deployment
 
@@ -90,65 +89,61 @@ e.g., using scap-workbench from the previous example, run the following command:
 
   $ tox -e sync -- --show
   sync: commands[0]> repolite --show
-  INFO:root:Repository oscap: branch is workbench-1.3, commit is 1.3.10-2-ga358f4657
-  INFO:root:Repository content: branch is oe-stable-too-new, commit is v0.1.75-36-ge1f2e9a2f4
-  INFO:root:Repository ymltoxml: branch is main, commit is 0.4.2
-    sync: OK (0.25=setup[0.04]+cmd[0.21] seconds)
-    congratulations :) (0.28 seconds)
+  INFO:root:Repository oscap: branch is workbench-1.3, commit is 1.3.16-7-g17e578ad1
+  INFO:root:Repository content: branch is master, commit is v0.1.61-21576-gfa922b140d
+  INFO:root:Repository yaml-tools: branch is main, commit is 0.5.2-40-g31edc17
+    sync: OK (0.14=setup[0.03]+cmd[0.11] seconds)
+    congratulations :) (0.18 seconds)
 
 .. note:: Some of the upstream repositories changed their release workflows,
-          e.g., tags in the content repo moved from master to stable, thus
-          the above output shows the "last" tag on master branch instead of
-          the most recent tag. In this case ``git describe`` may need the
-          branch name to show the latest tag::
+          e.g., tags in the ``content`` repo moved from master to
+          stable, thus the above output on ``master`` shows the "last"
+          tag on master branch instead of the most recent tag. In this
+          case ``git describe`` may need the branch name to show the
+          latest tag::
 
             $ git describe --tags --always  origin/stable
-            v0.1.75-32-gb9e06eeb74
-
+            v0.1.82-619-g911733af70
 
 The VCT branches for the configured workflows were forked from either
 master or the latest stable "maint" branch:
 
-* openscap - 1.3.13 tag plus 2 patches on workbench-1.3_ branch (``tox.ini`` file)
+* openscap - 1.3.16 tag plus 2 patches and 2 cherry-picks on workbench-1.3_
+  branch (``tox.ini`` file)
 
+  + update build deps and workflow environments
   + enable RPATH install support for local workflows
   + add basic tox file and update gitignore for tox dir
 
-* SSG - stabilization-v0.1.79 merge plus 4 patches on oe-stable-too-new_ branch
+* SSG - v0.1.82 merge plus 3 patches on oe-stable_ branch
   (``tox-dev.ini`` file)
 
   + oe standard: cleanup passwd aging and related login-defs checks
   + openembedded: add platform_package_overrides, update pkg applicability
-  + enable RPATH install for openscap, bump reqs version
   + pluck tox-dev, repolite cfgs, and reqs updates
 
-* SCAP Workbench - 6 patches on v1-2-devel_ (``tox.ini`` file)
+* SCAP Workbench - 1 patch on v1-2-devel_ (``tox.ini`` file)
 
-  + bump workflow deps and patches to 1.3.10 and 0.1.75
-  + roll back to fixed 1.3 branch for openscap, update metadata
-  + add example sudoers file for remote scan host
-  + add cmake RPATH install mod, update tox and repolite cfgs
-  + add yaml tools to repolite cfg, cleanup tox file
-  + add tox file/plugin and repolite config for local dev workflow
+  + update .repolite.yml to openscap 1.3.16+ and content v0.1.82+
 
-* SCAP Workbench - 2 patches on build-fixes (GCC-13 and Qt5.15)
+* SCAP Workbench - 12 (previous) patches on v1-2
 
-  + set the base C++ std version to c++11 and do not force c++20 err
-  + fix qt_version_check: 5.15 => 5.14
+  + includes all previous build, toolchain, and workflow patches
+    merged from v1-2-devel branch
 
 Each fork also has a repolite_ configuration file that specifies the
 required repository and metadata used to checkout the work branches (or
 specific git hashes for a reproducible "locked" repolite config).
 
-.. note:: Any previously listed patches for oscap and SSG content have been
-          accepted upstream and incorporated in recent releases.
+.. note:: Any previously listed OE patches for oscap and SSG content have
+          been accepted upstream and incorporated in recent releases.
 
 
 .. _Python: https://www.python.org/downloads/
 .. _Tox: https://github.com/tox-dev/tox
 .. _workbench-1.3: https://github.com/VCTLabs/openscap/tree/workbench-1.3
 .. _oe-stable-too-new: https://github.com/VCTLabs/scap-security-guide/tree/oe-stable-too-new
-.. _v1-2-devel: https://github.com/VCTLabs/scap-workbench/commits/ branch/
+.. _v1-2-devel: https://github.com/VCTLabs/scap-workbench/tree/v1-2-devel
 .. _repolite: https://github.com/sarnold/repolite
 
 
@@ -165,18 +160,24 @@ used to build the local checkouts for each workflow:
 3. SCAP workbench requires both of the previous components, so the
    workflow must sync, build, and install both openscap and the SSG
 
+The openscap build deps on latest ubuntu LTS include the following system packages::
+
+  $ sudo apt-get -y install lcov swig xsltproc rpm-common lua5.3 libpcre2-dev libyaml-dev libdbus-1-dev libdbus-glib-1-dev libcurl4-openssl-dev libgcrypt-dev libselinux1-dev libacl1-dev libblkid-dev libcap-dev libxml2-dev libxslt1-dev libxml-parser-perl libxml-xpath-perl libperl-dev librpm-dev librtmp-dev libxmlsec1-dev libxmlsec1-openssl1 python3-dbusmock python3-pytest
+
+On older ubuntu LTS try using ``libxmlsec1-openssl`` instead of ``libxmlsec1-openssl1``.
+
 All 3 components use CMake, thus the development environment requires
 the basic package building tools and either a GNU or Clang toolchain. On
-Ubuntu focal, it might be something like this::
+Ubuntu/Debian, it might be something like this::
 
-  $ sudo apt-get install flex bison build-essential
+  $ sudo apt-get install flex bison build-essential asciidoc pkg-config
 
 Additional Qt5 GUI and desktop dependencies for scap-workbench are also
-required; again, for Ubuntu focal use something like this::
+required; again, for Ubuntu use something like this::
 
   $ sudo apt-get install libqt5xmlpatterns5-dev ssh-askpass libpolkit-agent-1-0
 
-Tox will install any python and cmake-specific tools into the target
+Tox will install any python pkgs or cmake-specific tools into the target
 environment from PyPI.
 
 SSH keys and remote scanning
@@ -187,7 +188,7 @@ and smooth workflows. This can be *mostly* baked in for custom (yocto) images,
 but will need to be done manually for other hosts.
 
 Prerequisites
-~~~~~~~~~~~~~
+#############
 
 * "dev" host - Linux with openscap/SSG/workbench installed, plus ssh-askpass
 * target host - Linux with openscap scanner installed plus ssh server
@@ -204,17 +205,17 @@ like::
 
 
 Development workflow usage
---------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 General considerations:
 
 * run ``tox list`` to view the tox environment commands
-* except openscap, first run the workflow command to sync tool repositories
-* then run the build/install commands to create the virtual environment
+* first run the workflow command to sync tool repositories
+* then run the oscap,build,install commands to create the virtual environment
 
 Specific tox environment commands:
 
-* openscap - tools,tests,clean
+* oscap - tools,tests,clean
 * scap-security-guide - sync,tools,install,tests,clean
 * scap-workbench - sync,oscap,content,product,install,clean,depclean
 
@@ -241,10 +242,10 @@ Running the above command in the scap-workbench repo would show the following
 output::
 
   default environments:
-  oscap    -> Install required oscap lib or content dependencies into shared /home/user/src/scap-workbench/.tox/venv path
-  content  -> Install required oscap lib or content dependencies into shared /home/user/src/scap-workbench/.tox/venv path
-  install  -> Install scap workbench into shared /home/user/src/scap-workbench/.tox/venv path
-  product  -> Run build_product to install a single product (default: openembedded)
+  oscap    -> Install required oscap lib dependencies into shared /home/sarnold/src/work/scap-workbench/.venv path
+  content  -> Build all SSG products and install into shared /home/sarnold/src/work/scap-workbench/.venv path
+  install  -> Install scap workbench into shared /home/sarnold/src/work/scap-workbench/.venv path (requires Qt5 xmlpatterns)
+  product  -> Build a single product instead of ALL products (default: openembedded)
   sync     -> Install repolite and use it for handling workflow deps => openscap, SSG, python tools
   clean    -> Clean the cmake build tree
   depclean -> Clean the dependent cmake build trees
@@ -254,7 +255,7 @@ output::
           (including the above scap-workbench example) some of the tox commands
           use a shared environment, possibly with a name that is *not* a command
           name. In this example the tox commands ``oscap,content,product,install``
-          all use a shared virtual environment under ``.tox/venv``.
+          all use a shared virtual environment under ``.venv/``.
 
 
 SCAP workbench example
@@ -266,7 +267,7 @@ and change directories, then build::
   $ git clone https://github.com/VCTLabs/scap-workbench.git
   $ cd scap-workbench/
   $ git checkout v1-2-devel
-  $ tox -e sync                   # clone the oscap repos
+  $ tox -e sync                   # clone the oscap/ssg repos
   $ tox -e oscap,content,install  # build and install all products   --or--
   $ tox -e oscap,product,install  # build and install a single product
 
@@ -289,15 +290,15 @@ virtual environment created by the tox commands above, e.g.,
 
   $ cd scap-workbench/  # after running the above install commands
   $ source .venv/bin/activate
-  (venv) $ scap-workbench    # use the GUI to open a data stream (ds file)
-                             # from inside the virtual environment
+  (.venv) $ scap-workbench    # use the GUI to open a data stream (ds file)
+                              # from inside the virtual environment
 
 
-The installation path for SSG content is under the ``.tox/venv/`` folder::
+The installation path for SSG content is under the ``.venv/`` folder::
 
-  (venv) $ ls .tox/venv/
+  (.venv) $ ls .venv/
   bin  etc  include  lib  lib64  libexec  pyvenv.cfg  share
-  (venv) $ ls .tox/venv/share/xml/scap/ssg/content/ssg-openembedded*
+  (.venv) $ ls .venv/share/xml/scap/ssg/content/ssg-openembedded*
   .tox/venv/share/xml/scap/ssg/content/ssg-openembedded-cpe-dictionary.xml
   .tox/venv/share/xml/scap/ssg/content/ssg-openembedded-cpe-oval.xml
   .tox/venv/share/xml/scap/ssg/content/ssg-openembedded-ds-1.2.xml
@@ -321,8 +322,8 @@ workbench and perform the following steps to initiate a remote scan:
 
 ::
 
-  source .tox/venv/bin/activate
-  (venv) $ scap-workbench .tox/venv/share/xml/scap/ssg/content/ssg-openembedded-ds.xml
+  source .venv/bin/activate
+  (.venv) $ scap-workbench .venv/share/xml/scap/ssg/content/ssg-openembedded-ds.xml
 
 2. Verify the GUI displays the correct content guide and profile
    (select another profile as needed)
@@ -340,18 +341,53 @@ To save and/or handoff the results, use Save Results and select both XCCDF
 Result file and HTML Report.  Use Firefox/Chromium or another modern browser
 to review the HTML report file.
 
+SCAP releases and branches
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+openscap has 2 primary/active branches to accommodate API differences:
+
+* ``main`` branch for 1.4.x releases
+* ``maint-1.3 branch for 1.3.x releases
+
+SSG has 2 primary branches dedicated to "latest" and "stable":
+
+* ``master`` branch for incoming pull requests
+* ``stable`` branch is the endpoint of stabilization
+
+The default branches used for scap-workbench workflows are cut from the
+SSG ``stable`` branch and openscap ``maint-1.3`` branch (where scap-workbench
+is a legacy consumer of openscap 1.3.x API).
+
+Recommended usage
+-----------------
+
+* use stable profiles where you can (ie, from stable branches)
+
+  + use the ``oscap info``command to check for available profiles in Data Stream files
+
+* use SSG master branch for the latest profiles when necessary
+
+  + edit ``.repolite.yml`` and change the content branch to ``master``
+  + set ``repo_hash`` to a commit hash on master (or null for latest)
+  + run ``tox -e sync -- --update`` after changing ``.repolite.yml``
+
+Please be aware that non-stable profiles can be *very* drafty, as the current
+draft profiles for Ubuntu26 take several minutes longer to process than the
+non-draft profiles in Ububtu24, ie, 7+ minutes vs. ~2 mins.
 
 Production workflows
-====================
+~~~~~~~~~~~~~~~~~~~~
 
 * profile compliance
 * malware/CVE scans
 * packaging/deployment
 
 Production workflows will generally use released (and possibly backported)
-packages, and avoid the use of tox or locally cloned repositories. The main
-exception is using a development workflow to create an environment for running
-remote scans.
+packages, and avoid the use of tox or locally cloned repositories. Valid
+use cases for using the tox workflows include:
+
+* creating a virtual environment for remote scans, eg, openembedded devices
+* creating a (cmake) Debug build to generate SSG draft profiles, eg, ubuntu2604
 
 Production components
 ---------------------
@@ -363,7 +399,7 @@ Workbench provides an optional GUI for scanning or tailoring tasks.
 Backported packages are used when the required versions are not available
 in the given host environment, e.g., the packages available in Ubuntu 20.04
 (focal) are not new enough to scan a focal install, therefore the backports
-from a PPA are used instead. The intent is to provide the appropriate SSG
+from the PPA are used instead. The intent is to provide the appropriate SSG
 content to allow self-hosted scans for both compliance and tailoring.
 
 * OE board targets: meta-security-backports_ provides current openscap and
@@ -381,15 +417,16 @@ content to allow self-hosted scans for both compliance and tailoring.
 .. _embedded-overlay: https://github.com/VCTLabs/embedded-overlay
 
 Production workflow usage
--------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 General considerations:
 
 * installing from PPA or overlay requires a (one-time) setup step
 * OE scans require a specific build image with the scan tools
+* minimum target requirement for remote scans is ``openscap-scanner`` pkg
 
 Ubuntu PPA setup
-~~~~~~~~~~~~~~~~
+----------------
 
 The preferred Ubuntu target host for SCAP workflows is 22.04 (jammy); first
 make sure to have the ``add-apt-repository`` command installed and then add
@@ -429,8 +466,27 @@ Scroll to the desired (source) package name and click the arrow button to
 the left of Package Name (e.g., ``scap-security-guide``) to see the list of
 "Built packages".  Use the built package names in ``apt`` install commands.
 
+.. note:: Recent (target) OS releases such as Ubuntu 26.04 already have a
+          1.4.x version of the oscap scanner packages. This is okay for running
+          remote scans using ``scap-workbench`` (built against oscap 1.3.x),
+          however, using the "generate remediations" feature will most likely
+          fail. In this case you should un-install 1.4.x and install the 1.3.x
+          package from the PPA. Use an apt preferences override for the PPA as
+          shown below.
+
+Apt pin lower version from PPA::
+
+  $ cat /etc/apt/preferences.d/embedded-oscap
+  Package: *
+  Pin: release o=LP-PPA-nerdboy-embedded
+  Pin-Priority: 1001
+
+Note the above is temporary since it may still allow upgrades from the Ubuntu
+package repos.
+
+
 Gentoo overlay setup
-~~~~~~~~~~~~~~~~~~~~
+--------------------
 
 Follow the `overlay install instructions`_ and sync the overlay. There is not
 currently any Gentoo support in openscap, but you can install the workbench
@@ -449,7 +505,7 @@ OE (self-hosted) scan example
 TODO
 
 Practical considerations
-========================
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 * minimum (extra) software requirements for compliance scanning varies
   based on scan scenario, ie, self-hosted or remote scan
@@ -475,10 +531,10 @@ Use the ``oscap`` command directly from the console to select a specific
 profile or display all available profiles using the info command on the
 datastream file for a given product.
 
-If using OS packages, replace ``.tox/venv`` in the path with the local
-install prefix, probably ``/usr``::
+If using OS packages, replace ``.venv`` in the path with the local install
+prefix, probably ``/usr``::
 
-  $ oscap info .tox/venv/share/xml/scap/ssg/content/ssg-openembedded-ds.xml
+  $ oscap info .venv/share/xml/scap/ssg/content/ssg-openembedded-ds.xml
   Document type: Source Data Stream
   Imported: 2024-02-19T12:03:35
 
@@ -508,9 +564,29 @@ install prefix, probably ``/usr``::
           Ref-Id: scap_org.open-scap_cref_ssg-openembedded-cpe-dictionary.xml
 
 To run a scan using the "expanded" profile shown above, use the following
-command on the target host::
+command on the target host:
+
+::
 
   $ sudo oscap xccdf eval --profile xccdf_org.ssgproject.content_profile_expanded \
       --results results.xml \
       --report report.html \
-      .tox/venv/share/xml/scap/ssg/content/ssg-openembedded-ds.xml
+      .venv/share/xml/scap/ssg/content/ssg-openembedded-ds.xml
+
+To run a CVE scan on the target host using OS-vendor data in OVAL format:
+
+* install required packages as needed: ``apt-get -y install openscap-scanner openscap-utils bzip2``
+* download the latest vendor data for target host version, eg, Ubuntu26, and unzip
+* generate CVE report from OVAL data
+
+::
+
+  $ wget https://security-metadata.canonical.com/oval/com.ubuntu.resolute.usn.oval.xml.bz2
+  $ bunzip2 com.ubuntu.resolute.usn.oval.xml.bz2
+  $ oscap oval eval --report oval-resolute-cve-status.html com.ubuntu.resolute.usn.oval.xml
+
+* view the report using any modern browser (eg, epiphany or firefox)
+
+.. note:: The true flag means that the patch *has not* been applied to a
+          system, while the false flag means that the patch *has* been
+          applied, ie, green is patched, red is NOT patched.

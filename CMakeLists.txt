@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.28)
 
 # Inspired and referenced from https://blog.kitware.com/cmake-and-the-default-build-type
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -27,7 +27,11 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
     set(CLANG_DEFAULT_RTLIB compiler-rt)
 endif()
 
-option(LOCAL_INSTALL_WITH_RPATH "Use the full RPATH for the build tree" OFF)
+option(
+    LOCAL_INSTALL_WITH_RPATH
+    "Always use the full RPATH when running from the build tree"
+    OFF
+)
 
 include(GNUInstallDirs)
 
@@ -141,6 +145,9 @@ set(SCAP_WORKBENCH_INCLUDE_DIRS
 set(SCAP_WORKBENCH_LINK_LIBRARIES
     Qt5::Widgets Qt5::XmlPatterns
     ${OPENSCAP_LINK_LIB})
+
+# Turn on RPATH for OSX
+set(CMAKE_MACOSX_RPATH ON)
 
 configure_file("include/Config.h.in" "${CMAKE_CURRENT_BINARY_DIR}/Config.h")
 # It is not trivial to make the resulting file executable :-(

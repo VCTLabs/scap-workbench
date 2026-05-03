@@ -1,5 +1,7 @@
 name: Gating
+
 on:
+  workflow_dispatch:
   push:
     branches: [ main, v1-2 ]
   pull_request:
